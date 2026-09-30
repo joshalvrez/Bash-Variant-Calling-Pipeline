@@ -1,1 +1,6 @@
 results/
+smoke/
+smoke-out/
+tests/
+results/
+.DS_Store
