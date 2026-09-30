@@ -1,6 +1,6 @@
 # Bash Variant-Calling Pipeline
 
-BINF 6610 · Fall 2026 · Assignment 1
+BINF 6610 · Fall 2026 · Assignment 1  
 
 A ten-stage germline variant-calling pipeline written in Bash. It takes a samplesheet of FASTQ
 files, aligns each sample to a reference genome, calls variants per sample, genotypes the whole
