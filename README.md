@@ -87,11 +87,3 @@ Sequencing data, reference files, the acceptance tests and run output (`smoke/`,
 ## Requirements
 
 bash, gzip, awk, FastQC, fastp, BWA, samtools, GATK 4, MultiQC.
-
-## Acknowledgment of AI use
-
-<!-- Edit this to describe your own use accurately. -->
-I used AI assistants while completing this assignment: Gemini to help restructure my original
-stage 0, and Claude to debug the pipeline driver and stage 0, rebuild stage 0 from the course
-demo, rewire the stages' input/output paths, and add the MarkDuplicates step and the output
-checks after each tool.
