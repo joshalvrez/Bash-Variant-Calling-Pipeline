@@ -4,7 +4,7 @@
 # -o pipefail --> the return value of a pipeline is the status of the last command
 set -euo pipefail
 
-# finds script so stage 9 can call the manifest-writing script
+# finds script so stage 9 can call the manifest-writing script 
 HERE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 export RUN_STARTED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
