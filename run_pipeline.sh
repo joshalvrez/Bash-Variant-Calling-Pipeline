@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #=============================================================================
-# run_pipeline.sh — every sample, stages 0-9, in order.
+# run_pipeline.sh — the whole cohort, ten stages, in order.
 #
 #   bash run_pipeline.sh <samplesheet.csv> <outdir> [last-stage]
 #
@@ -13,20 +13,20 @@
 set -euo pipefail
 
 HERE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-export RUN_STARTED=$(date -u +%Y-%m-%dT%H:%M:%SZ)   # stage 9 writes it into the manifest
+export RUN_STARTED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 SHEET=${1:?usage: run_pipeline.sh <samplesheet.csv> <outdir> [last-stage]}
 OUT=${2:?usage: run_pipeline.sh <samplesheet.csv> <outdir> [last-stage]}
 LAST=${3:-publish}
-SAMPLE=""        # empty means "every sample" — see rows() in lib/common.sh
+# empty means "every sample"
+SAMPLE=""
 
 source "${HERE}/lib/common.sh"
 
-# The ten stages, in the order they run. Each name has a matching function in
-# stages/: `validate` -> stage_validate, `align` -> stage_align, and so on.
+# ten stages, in the order they run. each name has a matching function in stages
 STAGES=(validate qc_raw trim align postprocess quantify merge analyze qc_report publish)
 
-# Catch a typo in the third argument before running anything.
+# catches typo in third argument before running
 known=0
 for stage in "${STAGES[@]}"; do
     [[ "$stage" == "$LAST" ]] && known=1

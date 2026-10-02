@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=w2-cohort
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=8G
-#SBATCH --time=01:00:00
+#SBATCH --mem=4G
+#SBATCH --time=00:30:00
 #SBATCH --output=logs/cohort_%j.out
 #SBATCH --export=NONE
 #-----------------------------------------------------------------------------
@@ -15,8 +15,10 @@
 # submit.sh submits this with --dependency=afterok on the array, so it only
 # starts if all eight tasks exited 0.
 #
-# The three resource lines above are the first request. RESOURCES.md records
-# what was measured and what they were changed to.
+# The three resource lines above were measured, not guessed (RESOURCES.md):
+#   --cpus-per-task=2  1.04 cores busy; the cohort stages are single-threaded
+#   --mem=4G           peak was 1.19 GiB; the first request was 8G
+#   --time=00:30:00    the job took 8:57; the first request was 01:00:00
 #-----------------------------------------------------------------------------
 set -euo pipefail
 

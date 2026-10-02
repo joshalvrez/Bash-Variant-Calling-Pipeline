@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=w2-persample
 #SBATCH --array=1-8
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
-#SBATCH --time=01:00:00
+#SBATCH --time=00:30:00
 #SBATCH --output=logs/persample_%A_%a.out
 #SBATCH --export=NONE
 #-----------------------------------------------------------------------------
@@ -12,8 +12,10 @@
 # No analysis happens in this file. It decides WHICH sample runs and with what
 # resources; run_sample.sh decides what to do to it.
 #
-# The three resource lines above are the first, deliberately generous request.
-# RESOURCES.md records what was measured and what they were changed to.
+# The three resource lines above were measured, not guessed (RESOURCES.md):
+#   --cpus-per-task=4  the knee: 8 cores saved 1:13 over 4 and kept only 2.9 busy
+#   --mem=16G          highest peak seen was 13.6 GiB, so the first request stays
+#   --time=00:30:00    longest task was 11:06; the first request was 01:00:00
 #-----------------------------------------------------------------------------
 set -euo pipefail
 

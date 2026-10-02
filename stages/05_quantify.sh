@@ -1,4 +1,3 @@
-# shellcheck shell=bash
 set -euo pipefail
 # --- stage 5: quantify ---
 # per-sample variant calling -> one GVCF per sample
@@ -11,11 +10,9 @@ stage_quantify() {
         fi
 
         # -R --> reference genome
-        # -I --> the MarkDuplicates output from stage 4
+        # -I --> MarkDuplicates output from stage 4
         # -L --> restricts calling to our region
-        # -ERC GVCF --> genomic VCF, so stage 6 can joint-genotype
-        # HaplotypeCaller streams its output, so a kill mid-run would leave a
-        # fragment under the real name. Write .tmp, rename after exit 0.
+        # -ERC GVCF --> genomic VCF
         gatk HaplotypeCaller \
             -R "$REF" \
             -I "${ALN}/${id}.dedup.bam" \

@@ -22,7 +22,7 @@ LAST=${4:-quantify}
 
 source "${HERE}/lib/common.sh"
 
-# the guard: only the per-sample stages are allowed here
+# the guard --> per-sample stages are allowed
 PER_SAMPLE=(validate qc_raw trim align postprocess quantify)
 known=0
 for stage in "${PER_SAMPLE[@]}"; do
@@ -30,8 +30,6 @@ for stage in "${PER_SAMPLE[@]}"; do
 done
 (( known )) || die "run_sample.sh stops at quantify (stage 5); '${LAST}' needs the whole cohort — use run_pipeline.sh"
 
-# The sample has to be in the sheet. Otherwise every stage loops over zero rows,
-# succeeds at each, and the task exits 0 having done nothing.
 [[ -s "$SHEET" ]] || die "no samplesheet: ${SHEET}"
 [[ -n "$(rows "$SHEET" "$SAMPLE")" ]] || die "no sample '${SAMPLE}' in ${SHEET}"
 

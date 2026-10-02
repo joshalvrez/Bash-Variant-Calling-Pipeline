@@ -1,4 +1,3 @@
-# shellcheck shell=bash
 set -euo pipefail
 # --- stage 0: validate ---
 # check everything before computing anything
@@ -8,9 +7,6 @@ stage_validate() {
     while IFS=, read -r id cond rep layout r1 r2; do
         [[ -n "$id" ]] || { log "a row has no sample_id"; problems=$(( problems + 1 )); continue; }
 
-        # The array task already read this sample's FASTQ files end to end. The
-        # cohort job starts again from stage 0, so without this marker it would
-        # re-read all eight samples for nothing.
         if [[ -s "${LOG}/${id}.validated" ]]; then log "$id: inputs already verified"; continue; fi
         before=$problems
 
@@ -38,7 +34,6 @@ stage_validate() {
             else log "$id: R2 is not a valid gzip file (truncated?): $r2"; problems=$(( problems + 1 )); fi
         fi
 
-        # the records are whole (4 lines each), and the mates agree
         if (( r1_ok )); then
             n1=$(gzip -dc "$r1" | wc -l)
             (( n1 % 4 == 0 )) || { log "$id: R1 has $n1 lines, not a whole number of records"
@@ -50,15 +45,14 @@ stage_validate() {
             fi
         fi
 
-        # Write the marker only if THIS sample raised nothing. It has content
-        # (a date) because the check above is -s, which is false for an empty file.
+        # write marker only if THIS specific sample raised nothing; has content because the check above is -s --> which is false for an empty file.
         if (( problems == before )); then
             date -u +%Y-%m-%dT%H:%M:%SZ > "${LOG}/${id}.validated"
             log "$id: inputs verified"
         fi
     done < <(rows "$SHEET" "$SAMPLE")
 
-    # duplicate sample ids, checked over the WHOLE sheet even for one sample
+    # duplicate sample ids; checked over WHOLE sheet even for one sample
     dupes=$(rows "$SHEET" | cut -d, -f1 | sort | uniq -d)
     [[ -z "$dupes" ]] || { log "duplicate sample_id: $dupes"; problems=$(( problems + 1 )); }
 
@@ -68,7 +62,6 @@ stage_validate() {
     [[ -s "${REF%.*}.dict" ]]   || { log "no sequence dictionary at ${REF%.*}.dict";  problems=$(( problems + 1 )); }
     [[ -s "${REF}.bwt" ]]       || { log "no BWA index at ${REF}.bwt";                problems=$(( problems + 1 )); }
 
-    # exit 65 if any problems were found
     (( problems == 0 )) || die "validation failed with ${problems} problem(s)"
     log "validation passed"
 }
