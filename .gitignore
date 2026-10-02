@@ -4,3 +4,4 @@ smoke-out/
 tests/
 results/
 .DS_Store
+slurm/logs/
