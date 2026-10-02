@@ -35,8 +35,12 @@ if [[ ! -s "${PIPELINE_DIR}/run_pipeline.sh" ]]; then
     exit 78
 fi
 
-module load miniconda3/25.9.1
-source activate "${CONDA_ENV}"
+# The tools come from my image. Nothing is loaded or activated here: the last
+# line of this script runs the pipeline inside the .sif.
+if [[ ! -s "${SIF}" ]]; then
+    echo "no image at ${SIF}; fetch it first: sbatch pull.sbatch" >&2
+    exit 78
+fi
 
 export THREADS="${SLURM_CPUS_PER_TASK}"      # set from Slurm, not typed as a number
 
@@ -47,7 +51,19 @@ mkdir -p "${TMPDIR}"
 trap 'rm -rf "${TMPDIR}"' EXIT
 
 echo "cohort on $(hostname), ${SLURM_CPUS_PER_TASK} cores, run root ${RUN_ROOT}"
-bash "${PIPELINE_DIR}/run_pipeline.sh" "${SAMPLESHEET}" "${RUN_ROOT}"
+# Run the pipeline inside the image.
+#   --cleanenv  nothing from this job's environment crosses into the container
+#   --env       ...except the variables named here, which the pipeline reads
+#   --bind      the container sees home, /tmp and the submit directory by
+#               itself; the course data and my run directory have to be added
+apptainer exec --cleanenv \
+    --env THREADS="${THREADS}" \
+    --env TMPDIR="${TMPDIR}" \
+    --env SLURM_JOB_ID="${SLURM_JOB_ID}" \
+    --env SLURM_CPUS_PER_TASK="${SLURM_CPUS_PER_TASK}" \
+    --bind /courses/BINF6610.202710,/scratch/${USER} \
+    "${SIF}" \
+    bash "${PIPELINE_DIR}/run_pipeline.sh" "${SAMPLESHEET}" "${RUN_ROOT}"
 
 CG=/sys/fs/cgroup$(awk -F: '/^0::/{print $3}' /proc/self/cgroup)
 echo "memory.peak (bytes): $(cat "$CG/memory.peak" 2>/dev/null || echo unavailable)"
