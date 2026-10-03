@@ -1,9 +1,4 @@
-# variant-call — the tools my pipeline runs, at the versions the course conda
-# environment has, so that switching from the environment to this image changes
-# nothing about the software.
-#
-# Every version below is written out. The base image has a tag that is not
-# "latest", and every tool carries =version.
+# variant-call — tools pipeline runs, at the versions the course conda environment has, so that switching from the environment to this image changes nothing about the software.
 FROM mambaorg/micromamba:2.0.5-ubuntu24.04
 
 # conda-forge and bioconda only. The seven pins are what
@@ -29,6 +24,5 @@ RUN micromamba install -y -n base \
 # container command is not a login shell.
 ENV PATH=/opt/conda/bin:$PATH
 
-# Docker runs the container as this user. Apptainer ignores the line and runs
-# as whoever started it.
+# Docker runs the container as this user. Apptainer ignores the line and runs as whoever started it.
 USER mambauser
