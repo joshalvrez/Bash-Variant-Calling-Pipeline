@@ -257,6 +257,4 @@ run exit code: 255
 
 The pull succeeded with exit code 0 and no warning. Only running something out of the image failed, with exit code 255, and the message names the two architectures.
 
-**The fix** is to build for Explorer's CPU and check before pushing:
-`docker build --platform linux/amd64 ...`, then
-`docker image inspect --format '{{.Architecture}}' <image>` must print `amd64`.
+**The fix** is to build for Explorer's CPU and check before pushing: `docker build --platform linux/amd64 ...`, then `docker image inspect --format '{{.Architecture}}' <image>` must print `amd64`.
