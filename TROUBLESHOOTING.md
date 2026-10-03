@@ -1,5 +1,15 @@
 # TROUBLESHOOTING.md — four failures I caused on purpose
 
+## AI acknowledgement
+
+I used Claude Opus 5.5 as an assistant for Assignment 3 for the following:
+
+- Claude wrote and broke down key details around the `containers/Dockerfile` and `slurm/pull.sbatch` by adapting the demo's Dockerfile and the script on the assignment page to my pipeline's tools, changed the last line of both job scripts to run through `apptainer exec`, updated `slurm/conf/slurm.env`, and drafted `IMAGE.md`. I read each file and can edit them as needed.
+- Claude gave me the commands to build, check and push the image, fetch it onto Explorer, submit the run, compare the versions and record checksums, and cause the four failures. On my end, I ran every command myself on my laptop and on Explorer, and all digests, job ids and output in this repository are from my own runs.
+- Claude drafted the week-3 section of `TROUBLESHOOTING.md` and the sentence in `cluster-run-container/records-sha256.txt` from the output I collected. I reviewed them.
+
+
+
 ## 1 · `--time=00:02:00`
 
 ```bash
