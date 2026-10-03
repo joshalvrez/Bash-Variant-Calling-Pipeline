@@ -1,0 +1,46 @@
+{
+  "pipeline": {
+    "name": "variant-calling",
+    "version": "1.0.0",
+    "implementation": "singularity",
+    "git_sha": "e7b208d976ae5f630b67f55eff1859d56e7da237",
+    "run_id": "2026-10-03T00:09:33Z-e7b208d",
+    "started_at": "2026-10-03T00:09:33Z",
+    "finished_at": "2026-10-03T00:17:45Z",
+    "exit_status": "success"
+  },
+  "platform": {
+    "kind": "singularity-hpc",
+    "region": "chr20:1-10000000",
+    "host": "c3014",
+    "slurm_job_id": "10773321",
+    "slurm_cpus": "2",
+    "container": "/scratch/alvarez.josh/containers/variant-call.sif"
+  },
+  "reference": {"genome": "/courses/BINF6610.202710/data/refs/grch38-1000g/GRCh38_full_analysis_set_plus_decoy_hla.fa"},
+  "samples": [
+    {"sample_id": "NA12878", "library_type": "paired", "condition": "affected"},
+    {"sample_id": "NA12891", "library_type": "paired", "condition": "affected"},
+    {"sample_id": "NA12892", "library_type": "single", "condition": "unaffected"},
+    {"sample_id": "NA07357", "library_type": "paired", "condition": "unaffected"},
+    {"sample_id": "NA12003", "library_type": "single", "condition": "affected"},
+    {"sample_id": "NA10851", "library_type": "paired", "condition": "unaffected"},
+    {"sample_id": "NA12813", "library_type": "paired", "condition": "affected"},
+    {"sample_id": "NA12873", "library_type": "paired", "condition": "unaffected"}
+  ],
+  "outputs": [
+    {"stage": "analyze", "type": "vcf", "path": "cohort.filtered.vcf.gz", "checksum": "sha256:275cf7deb8b5c657911c89d80589a655f503586ad0b0af17bf629af99c9c4b0f"},
+    {"stage": "analyze", "type": "vcf_index", "path": "cohort.filtered.vcf.gz.tbi", "checksum": "sha256:3e1efa41a519bc0bf4f2a5b3905147b4bac8245bb193151f260ee53427fd4ee7"},
+    {"stage": "qc_report", "type": "multiqc", "path": "multiqc_report.html", "checksum": "sha256:2ed8bb8db669e1b121b26e3d7f950c49103f0dcf6d1e64c2734be7eeeb10212a"}
+  ],
+  "metrics": [],
+  "tools": {
+    "bwa": "0.7.19-r1273",
+    "samtools": "1.24",
+    "bcftools": "1.24",
+    "gatk": "4.6.2.0",
+    "fastqc": "0.12.1",
+    "fastp": "1.3.7",
+    "multiqc": "1.35"
+  }
+}
