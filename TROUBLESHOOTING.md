@@ -1,9 +1,10 @@
 # Troubleshooting: Assignment 4 (Nextflow)
 
-Four failures caused on purpose. Each one: the command, what printed, and the fix.
-Last week's four are in the Git history.
-
 ---
+
+## AI acknowledgement
+
+I used Claude Sonnet 5.5 while working on this assignment. During this assignment, Claude assisted me by helping me draft the first versions of `main.nf`, the process files in `modules/`, `bin/validate_samplesheet.sh`, `bin/make_variants_tsv.sh`, `nextflow.config` and `slurm/nextflow.sbatch`, working from the assignment page and course demo. The commands inside the modules are generic bwa and GATK commands that Claude helped me create. The VariantFiltration expression (`QD < 2.0`) is a placeholder which resulted in values that differed from my week 3 assignment. On top of this, Claude helped me breakdown read error outputs from the CLI. Finally, Claude assisted in drafting this file from the output of my runs and I made final edits and changes before submitting. 
 
 ## 1. Ctrl-C halfway through a smoke run, then `-resume`
 
@@ -14,10 +15,9 @@ rm -rf work .nextflow* results
 nextflow run main.nf -profile docker -resume -ansi-log false \
     --samplesheet $PWD/smoke/samplesheet.csv --ref $PWD/smoke/smoke.fa --region smoke_1mb
 # Ctrl-C after BWA_MEM (smoke_01) and BWA_MEM (smoke_02) were submitted,
-# then the identical command again
 ```
 
-**What printed**
+**Output**
 
 First run, before the Ctrl-C: `VALIDATE`, `FASTQC` and `FASTP` for all three samples, and `BWA_MEM` for smoke_01 and smoke_02 had been submitted.
 
@@ -26,9 +26,11 @@ Second run (`-resume`):
 - `cached`: VALIDATE, FASTP (smoke_01), FASTP (smoke_02).
 - Ran again: FASTP (smoke_03), all three FASTQC, all three BWA_MEM, then everything downstream (MARKDUPLICATES, HAPLOTYPECALLER, JOINT_GENOTYPE, FILTER, MULTIQC, PUBLISH).
 
+then ran the same command again
+
 **Why / fix**
 
-`-resume` reuses a task only if it finished and its script and inputs hash to the same value. Tasks that were still running when I pressed Ctrl-C, or had not started, had no finished outputs, so they ran again. Nothing needs fixing: put `-resume` on every run.
+`-resume` reuses a task only if it finished and its script and inputs hash to the same value. Tasks that were still running when I pressed Ctrl-C, or had not started, had no finished outputs, so they ran again.
 
 ---
 
@@ -36,21 +38,18 @@ Second run (`-resume`):
 
 **Command**
 
-Only in the call to BWA_MEM, `ref` replaced by `channel.fromPath(params.ref)`:
 
 ```groovy
 BWA_MEM(FASTP.out.reads, channel.fromPath(params.ref), ref_index)
 ```
 
-then the smoke dataset on the laptop with `-profile docker`.
+**Output**
 
-**What printed**
-
-No error. The run finished and listed its outputs. But BWA_MEM ran for one sample only (smoke_02), not three. smoke_01 and smoke_03 were never aligned, so the VCF held one sample's calls.
+No error. The run finished and listed its outputs. BWA_MEM, however, only ran for one sample (smoke_02), not three.
 
 **Why / fix**
 
-`channel.fromPath(...)` is a queue channel with one item, and a queue channel is consumed: the first sample that pairs with it uses it up, and the other two samples have nothing to pair with, so their tasks never start. Nextflow does not treat that as an error. `file(params.ref)` is a value channel, which every sample can read, so I put the call back to `BWA_MEM(FASTP.out.reads, ref, ref_index)`. The reference, its `.fai`, `.dict` and BWA index must be value channels, built with `file()` and `files()`. A check is the task count in the progress line: three samples should give three BWA_MEM tasks.
+`channel.fromPath(...)` makes a queue channel, which holds one item and gets used up. The first sample took the reference, and the other two had nothing left, resulting in their BWA_MEM tasks never running. Nextflow doesn't treat that as an error. `file(params.ref)` makes a value channel, which every sample can read, so I changed the call back to `BWA_MEM(FASTP.out.reads, ref, ref_index)`. The reference and its index files should always be value channels (`file()` and `files()`).
 
 ---
 
@@ -70,13 +69,11 @@ became
 echo "markdup finished $(date)"
 ```
 
-then the smoke dataset on the laptop.
+**Output**
 
-**What printed**
+Run did not fail. All three MARKDUPLICATES tasks ran and exited 0, and so did the stages after them; however, the task did the wrong thing without saying so. I aimed at an error and got silent wrong output: the module says `echo "markdup finished $(date)"`, the task's `.command.sh` says `echo "markdup finished date)"`, and the task printed `markdup finished date)` instead of a date.
 
-The run did not fail. All three MARKDUPLICATES tasks ran and exited 0, and so did the stages after them. But the task did the wrong thing without saying so. I aimed at an error and got silent wrong output: the module says `echo "markdup finished $(date)"`, the task's `.command.sh` says `echo "markdup finished date)"`, and the task printed `markdup finished date)` instead of a date.
-
-**Evidence from the task folder (`work/58/18afd8...`, smoke_01)**
+**Evidence from the task folder**
 
 `.command.sh`:
 
@@ -87,13 +84,9 @@ samtools index smoke_01.md.bam
 echo "markdup finished date)"
 ```
 
-`.command.err` (last lines): only Picard's normal INFO logging, ending with `MarkDuplicates done. Elapsed time: 0.03 minutes.` No error.
-
-`bash .command.run` in that folder ran the task again in its container: `Tool returned: 0`, and the last line of output was `markdup finished date)`.
-
 **Why / fix**
 
-In a script block Nextflow fills in every `$` itself before bash sees the script. With the backslash gone, the `$(` did not reach `.command.sh`; only `date)` did. Bash therefore never ran `date`, and nothing complained, because what is left is a valid string. That is the dangerous kind of failure: exit 0 and wrong output. Other dollar signs fail more loudly: a bash variable such as `$n` stops Nextflow before any task runs, with `n is not defined`, and `$2` inside an awk program runs without an error and prints the wrong thing (both are noted on the assignment page; I only tested `$(date)`). Fix: put the backslash back, `\$(date)`, which I did with `git checkout modules/markduplicates.nf`. The rule is `${name}` for a Nextflow value and `\$` for every `$` that bash should see, and `.command.sh` shows exactly what bash received.
+Nextflow reads the `$` in a script block before bash does. Without the backslash, it ate the `$(`, so `.command.sh` only had `date)` in it. Bash never ran `date`. Nothing crashed and the task just printed the wrong thing. To fix this, I placed the backslash back, `\$(date)`. The rule is `${name}` for Nextflow values and `\$` for any `$` that bash should see. Reading `.command.sh` shows what bash actually got.
 
 ---
 
@@ -101,25 +94,14 @@ In a script block Nextflow fills in every `$` itself before bash sees the script
 
 **Command**
 
-Added to the `explorer` profile in `nextflow.config`, after the `BWA_MEM|HAPLOTYPECALLER` block so that the later selector wins:
-
 ```groovy
 withName: 'HAPLOTYPECALLER' {
     time = '2m'
 }
 ```
 
-then `sbatch slurm/nextflow.sbatch` on Explorer.
-
-**What printed**
-
-Nextflow stopped with:
-
-```
-Process `HAPLOTYPECALLER (NA07357)` terminated with an error exit status (140)
-```
-
-`sacct -X` for the HaplotypeCaller jobs:
+**Output**
+Nextflow reported: `HAPLOTYPECALLER (NA07357)` terminated with an error exit status (140).
 
 | Job | State | Elapsed | Timelimit | ExitCode |
 |---|---|---|---|---|
@@ -128,14 +110,6 @@ Process `HAPLOTYPECALLER (NA07357)` terminated with an error exit status (140)
 | nf-HAPLOTYPECALLER_(NA12891) | FAILED | 00:01:02 | 00:02:00 | 12:0 |
 | the other three | CANCELLED+ | 00:00:18 to 00:00:37 | 00:02:00 | 0:0 |
 
-I expected `TIMEOUT` at two minutes. I got `FAILED` at about one minute twenty seconds.
-
 **Why / fix**
 
-Nextflow asks Slurm to send the job a warning signal (USR2) 30 seconds before its time limit, and stops the task when the warning arrives. So the task ended on that signal, not at the limit itself: exit status 140 is 128 plus signal 12, matching `12:0` in `sacct`, and Slurm recorded `FAILED` and not `TIMEOUT`. The other three tasks were cancelled by Nextflow when the run stopped. Fix: put `time = '1h'` back (`git checkout nextflow.config`) and submit again. `-resume` does not rerun a task just because its time limit changed, since `cpus`, `memory` and `time` are not part of what Nextflow compares. So the tasks that had finished (VALIDATE, FASTQC, FASTP, BWA_MEM, MARKDUPLICATES) were reused and the run carried on from HAPLOTYPECALLER.
-
----
-
-## Also hit (not one of the four): Apptainer image pulls on Explorer
-
-The first two Explorer attempts stopped before any analysis. One head job failed with `no descriptor found for reference` while Nextflow pulled several images at once, and a later run's FASTP task exited 127 (`fastp: command not found`) from a damaged cached image. I removed the bad `.img` files and the Apptainer cache, then pulled the six images one at a time in a small Slurm job into `/scratch/$USER/nxf-apptainer`. Nextflow found them cached and the run started normally.
+Nextflow tells Slurm to warn the job 30 seconds before its time limit (signal USR2), and then Nextflow stops the task itself. So the task died at the warning and  not at the limit. That's why `sacct` said `FAILED` with exit code `12:0`, not `TIMEOUT`, and why Nextflow reported exit status 140. The other three tasks were cancelled when the run stopped. To fix it I put `time = '1h'` back (`git checkout nextflow.config`) and submitted again. `-resume` doesn't care that the time limit changed, so everything that had already finished was reused and the run picked up at HAPLOTYPECALLER.
