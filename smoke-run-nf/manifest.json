@@ -5,10 +5,10 @@
     "implementation": "nextflow",
     "revision": "none",
     "git_sha": "none",
-    "run_id": "drunk_sammet",
-    "started_at": "2026-10-09T20:02:22.625417-04:00",
+    "run_id": "small_becquerel",
+    "started_at": "2026-10-09T23:32:44.718470-04:00",
     "launch_dir": "/Users/joshalvarez/neu/fall26/sci_comp/assignment_1/Bash_Variant_Calling_Pipeline",
-    "finished_at": "2026-10-10T00:03:43Z",
+    "finished_at": "2026-10-10T03:34:11Z",
     "exit_status": "success"
   },
   "params": {
@@ -37,8 +37,8 @@
     {"sample_id": "smoke_03", "library_type": "single", "condition": "affected"}
   ],
   "outputs": [
-    {"path": "cohort.filtered.vcf.gz", "checksum": "sha256:36ee2bdb2576d1294f7d5542c1052f53660d9bab0075528bcb93747d126e7353"},
-    {"path": "multiqc_report.html", "checksum": "sha256:8359ed4c2633b04bd4c8e0fdb052391aa5eeddb005477d43b766700d47c69fa1"},
+    {"path": "cohort.filtered.vcf.gz", "checksum": "sha256:d8f2b51fbc0272851b19fe1a997c62f345d988917a934f0a7ad4a888f9867fb0"},
+    {"path": "multiqc_report.html", "checksum": "sha256:fbeb7724187cef865f99890f2fd8597123d0b7943a000d1325b15fde95d1e591"},
     {"path": "samples.tsv", "checksum": "sha256:d534edf8132cce4c541af0eea6cc345b17613e1b4a7a5286742aa8d16395257c"},
     {"path": "variants.tsv", "checksum": "sha256:9f37c83cddf2fff6cea6d6319a70ccd225c3dc3f8b7160d8dc9b47dcaf1e5113"}
   ]

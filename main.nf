@@ -34,12 +34,12 @@ workflow {
     FASTP(ch_checked)
     BWA_MEM(FASTP.out.reads, ref, ref_index)
     MARKDUPLICATES(BWA_MEM.out)
-    HAPLOTYPECALLER(MARKDUPLICATES.out, ref, ref_index, ref_dict)
+    HAPLOTYPECALLER(MARKDUPLICATES.out.bam, ref, ref_index, ref_dict)
     JOINT_GENOTYPE(HAPLOTYPECALLER.out.gvcf.collect(), HAPLOTYPECALLER.out.tbi.collect(),
                    ref, ref_index, ref_dict)
     FILTER(JOINT_GENOTYPE.out.vcf, JOINT_GENOTYPE.out.tbi, ref, ref_index, ref_dict)
 
-    ch_qc = FASTQC.out.zip.mix(FASTP.out.json).collect()
+    ch_qc = FASTQC.out.zip.mix(FASTP.out.json, MARKDUPLICATES.out.metrics).collect()
     MULTIQC(ch_qc)
     PUBLISH(VALIDATE.out.sheet, FILTER.out.vcf.mix(FILTER.out.table, MULTIQC.out).collect())
 

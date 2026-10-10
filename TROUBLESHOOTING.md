@@ -4,7 +4,7 @@
 
 ## AI acknowledgement
 
-I used Claude Sonnet 5.5 while working on this assignment. During this assignment, Claude assisted me by helping me draft the first versions of `main.nf`, the process files in `modules/`, `bin/validate_samplesheet.sh`, `bin/make_variants_tsv.sh`, `nextflow.config` and `slurm/nextflow.sbatch`, working from the assignment page and course demo. The commands inside the modules are generic bwa and GATK commands that Claude helped me create. The VariantFiltration expression (`QD < 2.0`) is a placeholder which resulted in values that differed from my week 3 assignment. On top of this, Claude helped me breakdown read error outputs from the CLI. Finally, Claude assisted in drafting this file from the output of my runs and I made final edits and changes before submitting. 
+I used Claude Sonnet 5.5 while working on this assignment. During this assignment, Claude assisted me by helping me draft the first versions of `main.nf`, the process files in `modules/`, `bin/validate_samplesheet.sh`, `bin/make_variants_tsv.sh`, `nextflow.config` and `slurm/nextflow.sbatch`, working from the assignment page and course demo. Claude's first draft of the modules used generic bwa and GATK commands, with a placeholder VariantFiltration expression (`QD < 2.0`); with Claude's help I then replaced them with my own week-1 stage commands from `stages/` (the read group on `bwa mem`, samtools view/sort before MarkDuplicates, CombineGVCFs then GenotypeGVCFs, and my `QUAL < 30.0` LowQual filter), and reran both the smoke and Explorer runs. On top of this, Claude helped me breakdown read error outputs from the CLI. Finally, Claude assisted in drafting this file from the output of my runs and I made final edits and changes before submitting. 
 
 ## 1. Ctrl-C halfway through a smoke run, then `-resume`
 
@@ -57,7 +57,7 @@ No error. The run finished and listed its outputs. BWA_MEM, however, only ran fo
 
 **Command**
 
-In `modules/markduplicates.nf`, the line
+In `modules/markduplicates.nf` (the module as of commit e1a18b3, before I replaced it with my week-1 commands), the line
 
 ```groovy
 echo "markdup finished \$(date)"
@@ -103,13 +103,19 @@ withName: 'HAPLOTYPECALLER' {
 **Output**
 Nextflow reported: `HAPLOTYPECALLER (NA07357)` terminated with an error exit status (140).
 
-| Job | State | Elapsed | Timelimit | ExitCode |
-|---|---|---|---|---|
-| nf-HAPLOTYPECALLER_(NA07357) | FAILED | 00:01:20 | 00:02:00 | 12:0 |
-| nf-HAPLOTYPECALLER_(NA12892) | FAILED | 00:01:18 | 00:02:00 | 12:0 |
-| nf-HAPLOTYPECALLER_(NA12891) | FAILED | 00:01:02 | 00:02:00 | 12:0 |
-| the other three | CANCELLED+ | 00:00:18 to 00:00:37 | 00:02:00 | 0:0 |
+`sacct -u $USER -S 2026-10-09 --format=JobID,JobName%40,State,Elapsed,Timelimit,ExitCode`, the 2-minute run:
+
+| JobID | JobName | State | Elapsed | Timelimit | ExitCode |
+|---|---|---|---|---|---|
+| 10954976 | nf-HAPLOTYPECALLER_(NA07357) | FAILED | 00:01:20 | 00:02:00 | 12:0 |
+| 10954977 | nf-HAPLOTYPECALLER_(NA12892) | FAILED | 00:01:18 | 00:02:00 | 12:0 |
+| 10954985 | nf-HAPLOTYPECALLER_(NA12891) | FAILED | 00:01:02 | 00:02:00 | 12:0 |
+| 10954991 | nf-HAPLOTYPECALLER_(NA12003) | CANCELLED+ | 00:00:37 | 00:02:00 | 0:0 |
+| 10954993 | nf-HAPLOTYPECALLER_(NA10851) | CANCELLED+ | 00:00:28 | 00:02:00 | 0:0 |
+| 10954994 | nf-HAPLOTYPECALLER_(NA12878) | CANCELLED+ | 00:00:18 | 00:02:00 | 0:0 |
+
+NA12873 and NA12813 have no 2-minute job: the run stopped before they were submitted. After putting `time = '1h'` back and resubmitting with `-resume`, all eight finished (jobs 10955040 to 10955057, State COMPLETED, Elapsed 00:03:28 to 00:07:03, Timelimit 01:00:00, ExitCode 0:0).
 
 **Why / fix**
 
-Nextflow tells Slurm to warn the job 30 seconds before its time limit (signal USR2), and then Nextflow stops the task itself. So the task died at the warning and  not at the limit. That's why `sacct` said `FAILED` with exit code `12:0`, not `TIMEOUT`, and why Nextflow reported exit status 140. The other three tasks were cancelled when the run stopped. To fix it I put `time = '1h'` back (`git checkout nextflow.config`) and submitted again. `-resume` doesn't care that the time limit changed, so everything that had already finished was reused and the run picked up at HAPLOTYPECALLER.
+Nextflow tells Slurm to warn the job 30 seconds before its time limit (signal USR2), and then Nextflow stops the task itself. So the task died at the warning and not at the limit. The three failed jobs stopped between 1:02 and 1:20 rather than exactly at 1:30, because Slurm can send that signal up to a minute before the requested time. That's why `sacct` said `FAILED` with exit code `12:0`, not `TIMEOUT`, and why Nextflow reported exit status 140. The other three tasks were cancelled when the run stopped. To fix it I put `time = '1h'` back (`git checkout nextflow.config`) and submitted again. `-resume` doesn't care that the time limit changed, so everything that had already finished was reused and the run picked up at HAPLOTYPECALLER.

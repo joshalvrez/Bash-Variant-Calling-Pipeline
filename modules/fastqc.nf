@@ -11,6 +11,6 @@ process FASTQC {
 
     script:
     """
-    fastqc -q -t ${task.cpus} ${reads}
+    fastqc -q ${reads}
     """
 }

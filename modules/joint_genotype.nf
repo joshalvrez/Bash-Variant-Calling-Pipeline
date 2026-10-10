@@ -1,4 +1,4 @@
-// Stage 6 · merge: every sample's GVCF and its index, at once.
+// Stage 6 · merge: joint genotyping across the whole cohort (every GVCF and its index, at once).
 process JOINT_GENOTYPE {
     container params.containers.gatk
 
@@ -14,11 +14,10 @@ process JOINT_GENOTYPE {
     path 'cohort.vcf.gz.tbi', emit: tbi
 
     script:
-    def xmx = Math.max(task.memory.toGiga() - 1, 1)
     """
     args=""
     for g in ${gvcfs}; do args="\$args -V \$g"; done
-    gatk --java-options "-Xmx${xmx}g" CombineGVCFs -R ${ref} \$args -O combined.g.vcf.gz
-    gatk --java-options "-Xmx${xmx}g" GenotypeGVCFs -R ${ref} -V combined.g.vcf.gz -O cohort.vcf.gz
+    gatk CombineGVCFs -R ${ref} \$args -O cohort.g.vcf.gz -L ${params.region}
+    gatk GenotypeGVCFs -R ${ref} -V cohort.g.vcf.gz -O cohort.vcf.gz -L ${params.region}
     """
 }

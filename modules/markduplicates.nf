@@ -1,18 +1,20 @@
-// Stage 4 · postprocess
+// Stage 4 · postprocess: SAM -> BAM -> sorted -> duplicates marked -> indexed.
 process MARKDUPLICATES {
     tag "${meta.id}"
     container params.containers.gatk
 
     input:
-    tuple val(meta), path(bam)
+    tuple val(meta), path(sam)
 
     output:
-    tuple val(meta), path("${meta.id}.md.bam"), path("${meta.id}.md.bam.bai")
+    tuple val(meta), path("${meta.id}.dedup.bam"), path("${meta.id}.dedup.bam.bai"), emit: bam
+    path "${meta.id}.dup_metrics.txt",                                              emit: metrics
 
     script:
     """
-    gatk MarkDuplicates -I ${bam} -O ${meta.id}.md.bam -M ${meta.id}.md.metrics.txt
-    samtools index ${meta.id}.md.bam
-    echo "markdup finished \$(date)"
+    samtools view -@ ${task.cpus} -bS ${sam} > ${meta.id}.unsorted.bam
+    samtools sort -@ ${task.cpus} -T sort.${meta.id} -o ${meta.id}.sorted.bam ${meta.id}.unsorted.bam
+    gatk MarkDuplicates -I ${meta.id}.sorted.bam -O ${meta.id}.dedup.bam -M ${meta.id}.dup_metrics.txt
+    samtools index -@ ${task.cpus} ${meta.id}.dedup.bam
     """
 }

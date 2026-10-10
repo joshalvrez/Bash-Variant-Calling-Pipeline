@@ -1,4 +1,4 @@
-// Stage 8 · qc_report
+// Stage 8 · qc_report: -f overwrites an existing report.
 process MULTIQC {
     container params.containers.multiqc
 
@@ -10,6 +10,6 @@ process MULTIQC {
 
     script:
     """
-    multiqc -q .
+    multiqc -q -f .
     """
 }

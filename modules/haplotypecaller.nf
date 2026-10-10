@@ -1,4 +1,4 @@
-// Stage 5 · quantify
+// Stage 5 · quantify: one GVCF per sample, restricted to the region.
 process HAPLOTYPECALLER {
     tag "${meta.id}"
     container params.containers.gatk
@@ -14,10 +14,13 @@ process HAPLOTYPECALLER {
     path "${meta.id}.g.vcf.gz.tbi", emit: tbi
 
     script:
-    def xmx = Math.max(task.memory.toGiga() - 1, 1)
     """
-    gatk --java-options "-Xmx${xmx}g" HaplotypeCaller \\
-        -R ${ref} -I ${bam} -O ${meta.id}.g.vcf.gz -ERC GVCF \\
-        -L ${params.region} --native-pair-hmm-threads ${task.cpus}
+    gatk HaplotypeCaller \\
+        -R ${ref} \\
+        -I ${bam} \\
+        -O ${meta.id}.g.vcf.gz \\
+        -L ${params.region} \\
+        -ERC GVCF \\
+        --native-pair-hmm-threads ${task.cpus}
     """
 }
