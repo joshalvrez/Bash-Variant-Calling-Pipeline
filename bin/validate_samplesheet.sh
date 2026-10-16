@@ -18,7 +18,8 @@ rows() {
 problems=0
 while IFS=, read -r id cond rep layout r1 r2; do
     [[ -n "$id" ]] || { log "a row has no sample_id"; problems=$(( problems + 1 )); continue; }
-    r1=$(basename "$r1"); [[ -z "$r2" ]] || r2=$(basename "$r2")
+        case "$r1" in /*) ;; *) r1="$(dirname "$SHEET")/$r1" ;; esac
+    if [[ -n "$r2" ]]; then case "$r2" in /*) ;; *) r2="$(dirname "$SHEET")/$r2" ;; esac; fi
 
     # check if r1 file is missing or empty
     [[ -s "$r1" ]] || { log "$id: R1 missing or empty: $r1"; problems=$(( problems + 1 )); }

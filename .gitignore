@@ -10,3 +10,8 @@ work/
 .nextflow.log*
 results/
 nf-head-*.out
+.snakemake/
+work/
+logs/
+results/
+slurm/*.out
