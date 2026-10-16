@@ -1,0 +1,3 @@
+95af738672cf66871bbf4dee495421e658ff3959158313f30e41ae0b28266513  -
+d705917fb5ff8fda5e634bc48c9279603fae596dc687c942acfd90502ea07137  -
+They differ because the week 4 VCF used a different filter:. It labels some records LowQD while the filter in this repo only uses LowQual (quality below 30).
