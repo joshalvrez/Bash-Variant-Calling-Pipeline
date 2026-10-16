@@ -1,121 +1,43 @@
-# Troubleshooting: Assignment 4 (Nextflow)
+# Troubleshooting: four failures caused on purpose
 
----
+*AI Citation: I used Claude (Sonnet 5.5) to guide me through the commands and to explain and expand on the errors. The outputs below are from my own runs.*
 
-## AI acknowledgement
+## 1. Ctrl-C in the middle of a run (laptop)
 
-I used Claude Sonnet 5.5 while working on this assignment. During this assignment, Claude assisted me by helping me draft the first versions of `main.nf`, the process files in `modules/`, `bin/validate_samplesheet.sh`, `bin/make_variants_tsv.sh`, `nextflow.config` and `slurm/nextflow.sbatch`, working from the assignment page and course demo. Claude's first draft of the modules used generic bwa and GATK commands, with a placeholder VariantFiltration expression (`QD < 2.0`); with Claude's help I then replaced them with my own week-1 stage commands from `stages/` (the read group on `bwa mem`, samtools view/sort before MarkDuplicates, CombineGVCFs then GenotypeGVCFs, and my `QUAL < 30.0` LowQual filter). The smoke run in `smoke-run-nf/` uses those commands; the Explorer run in `cluster-run-nf/` is from the earlier version, and a rerun with the current modules is in progress. On top of this, Claude helped me breakdown read error outputs from the CLI. Finally, Claude assisted in drafting this file from the output of my runs and I made final edits and changes before submitting. 
+Command: `snakemake --profile profiles/laptop --config samplesheet=smoke/samplesheet.csv ref=smoke/smoke.fa region=smoke_1mb`
 
-## 1. Ctrl-C halfway through a smoke run, then `-resume`
+I pressed Ctrl-C about 8 seconds into the run. Snakemake printed `Terminating processes on user request, this might take some time.` and `WorkflowError: At least one job did not complete successfully.` That run had planned 14 jobs. I expected the rerun to fail with an error telling me to add `--rerun-incomplete`. It didn't: Ctrl-C was a clean stop. AS a result, Snakemake deleted the half-written files itself. The same command then ran 11 jobs (3 had already finished) and printed `11 of 11 steps (100%) done`.
 
-**Command**
+Fix: I reran the same command and no fix was needed. 
 
-```bash
-rm -rf work .nextflow* results
-nextflow run main.nf -profile docker -resume -ansi-log false \
-    --samplesheet $PWD/smoke/samplesheet.csv --ref $PWD/smoke/smoke.fa --region smoke_1mb
-# Ctrl-C after BWA_MEM (smoke_01) and BWA_MEM (smoke_02) were submitted,
-```
+## 2. A log: with no {sample} (laptop)
 
-**Output**
+Command: `snakemake --profile profiles/laptop -n --config samplesheet=smoke/samplesheet.csv ref=smoke/smoke.fa region=smoke_1mb`
 
-First run, before the Ctrl-C: `VALIDATE`, `FASTQC` and `FASTP` for all three samples, and `BWA_MEM` for smoke_01 and smoke_02 had been submitted.
+I removed `{sample}` from the log path of `bwa_mem` and Snakemake printed: `RuleException ... Not all output, log and benchmark files of rule bwa_mem contain the same wildcards.`
 
-Second run (`-resume`):
+Why: `bwa_mem` runs once per sample -->  a log path without `{sample}` is the same file for every sample and the jobs would overwrite each other.
 
-- `cached`: VALIDATE, FASTP (smoke_01), FASTP (smoke_02).
-- Ran again: FASTP (smoke_03), all three FASTQC, all three BWA_MEM, then everything downstream (MARKDUPLICATES, HAPLOTYPECALLER, JOINT_GENOTYPE, FILTER, MULTIQC, PUBLISH).
+Fix: I put `"logs/bwa_mem/{sample}.log"` back into the code block.
 
-then ran the same command again
+## 3. Deleting both wildcard_constraints (laptop)
 
-**Why / fix**
+Command: the same `snakemake -n` command as failure 2.
 
-`-resume` reuses a task only if it finished and its script and inputs hash to the same value. Tasks that were still running when I pressed Ctrl-C, or had not started, had no finished outputs, so they ran again.
+I deleted the `wildcard_constraints:` from `fastp_paired` and `fastp_single`. Snakemake printed: `AmbiguousRuleException: Rules fastp_single and fastp_paired are ambiguous for the file work/trim/smoke_01_R1.trim.fastq.gz.`
 
----
+Why: Error printed because both rules could make that file and Snakemake won't choose.
 
-## 2. The reference given as a queue channel in the stage-3 call
+Fix: I put both wildcard_constraints back into the code block.
 
-**Command**
+## 4. No Apptainer on Explorer
 
+I deleted `software-deployment-method: apptainer` from `profiles/explorer/profile.yaml` and submitted the head job (job 11146828). The following were the outputs: 
 
-```groovy
-BWA_MEM(FASTP.out.reads, channel.fromPath(params.ref), ref_index)
-```
+- Rule that failed: `fastqc` (and `fastp_paired`).
+- Exit status: `FAILED`, exit code 1, in `.snakemake/slurm_logs/rule_fastqc/NA10851/11146880.log`.
+- The rule's own log, `logs/fastqc/NA10851.log`, said `fastqc: command not found`.
 
-**Output**
+Why: with no Apptainer --> the tools are not on compute node.
 
-No error. The run finished and listed its outputs. BWA_MEM, however, only ran for one sample (smoke_02), not three.
-
-**Why / fix**
-
-`channel.fromPath(...)` makes a queue channel, which holds one item and gets used up. The first sample took the reference, and the other two had nothing left, resulting in their BWA_MEM tasks never running. Nextflow doesn't treat that as an error. `file(params.ref)` makes a value channel, which every sample can read, so I changed the call back to `BWA_MEM(FASTP.out.reads, ref, ref_index)`. The reference and its index files should always be value channels (`file()` and `files()`).
-
----
-
-## 3. Backslash removed from `\$(...)` in a script block
-
-**Command**
-
-In `modules/markduplicates.nf` (the module as of commit e1a18b3, before I replaced it with my week-1 commands), the line
-
-```groovy
-echo "markdup finished \$(date)"
-```
-
-became
-
-```groovy
-echo "markdup finished $(date)"
-```
-
-**Output**
-
-Run did not fail. All three MARKDUPLICATES tasks ran and exited 0, and so did the stages after them; however, the task did the wrong thing without saying so. I aimed at an error and got silent wrong output: the module says `echo "markdup finished $(date)"`, the task's `.command.sh` says `echo "markdup finished date)"`, and the task printed `markdup finished date)` instead of a date.
-
-**Evidence from the task folder**
-
-`.command.sh`:
-
-```
-#!/bin/bash -euo pipefail
-gatk MarkDuplicates -I smoke_01.bam -O smoke_01.md.bam -M smoke_01.md.metrics.txt
-samtools index smoke_01.md.bam
-echo "markdup finished date)"
-```
-
-**Why / fix**
-
-Nextflow reads the `$` in a script block before bash does. Without the backslash, it ate the `$(`, so `.command.sh` only had `date)` in it. Bash never ran `date`. Nothing crashed and the task just printed the wrong thing. To fix this, I placed the backslash back, `\$(date)`. The rule is `${name}` for Nextflow values and `\$` for any `$` that bash should see. Reading `.command.sh` shows what bash actually got.
-
----
-
-## 4. `time = '2m'` for HAPLOTYPECALLER on the first Explorer run
-
-**Command**
-
-```groovy
-withName: 'HAPLOTYPECALLER' {
-    time = '2m'
-}
-```
-
-**Output**
-Nextflow reported: `HAPLOTYPECALLER (NA07357)` terminated with an error exit status (140).
-
-`sacct -u $USER -S 2026-10-09 --format=JobID,JobName%40,State,Elapsed,Timelimit,ExitCode`, the 2-minute run:
-
-| JobID | JobName | State | Elapsed | Timelimit | ExitCode |
-|---|---|---|---|---|---|
-| 10954976 | nf-HAPLOTYPECALLER_(NA07357) | FAILED | 00:01:20 | 00:02:00 | 12:0 |
-| 10954977 | nf-HAPLOTYPECALLER_(NA12892) | FAILED | 00:01:18 | 00:02:00 | 12:0 |
-| 10954985 | nf-HAPLOTYPECALLER_(NA12891) | FAILED | 00:01:02 | 00:02:00 | 12:0 |
-| 10954991 | nf-HAPLOTYPECALLER_(NA12003) | CANCELLED+ | 00:00:37 | 00:02:00 | 0:0 |
-| 10954993 | nf-HAPLOTYPECALLER_(NA10851) | CANCELLED+ | 00:00:28 | 00:02:00 | 0:0 |
-| 10954994 | nf-HAPLOTYPECALLER_(NA12878) | CANCELLED+ | 00:00:18 | 00:02:00 | 0:0 |
-
-NA12873 and NA12813 have no 2-minute job: the run stopped before they were submitted. After putting `time = '1h'` back and resubmitting with `-resume`, all eight finished (jobs 10955040 to 10955057, State COMPLETED, Elapsed 00:03:28 to 00:07:03, Timelimit 01:00:00, ExitCode 0:0).
-
-**Why / fix**
-
-Nextflow tells Slurm to warn the job 30 seconds before its time limit (signal USR2), and then Nextflow stops the task itself. So the task died at the warning and not at the limit. The three failed jobs stopped between 1:02 and 1:20 rather than exactly at 1:30, because Slurm can send that signal up to a minute before the requested time. That's why `sacct` said `FAILED` with exit code `12:0`, not `TIMEOUT`, and why Nextflow reported exit status 140. The other three tasks were cancelled when the run stopped. To fix it I put `time = '1h'` back (`git checkout nextflow.config`) and submitted again. `-resume` doesn't care that the time limit changed, so everything that had already finished was reused and the run picked up at HAPLOTYPECALLER.
+Fix: `git checkout profiles/explorer/profile.yaml`, then I resubmitted (job 11147007). `validate` ran again; dry run said `Software environment definition has changed since last execution`.
