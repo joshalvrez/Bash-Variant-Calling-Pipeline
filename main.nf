@@ -13,6 +13,7 @@ workflow {
     main:
     ref       = file(params.ref)
     ref_index = files("${params.ref}.*")
+    // week 6: resolveSibling keeps the s3:// prefix, so the .dict is found next to smoke.fa in the bucket (week 4's string version lost it)
     ref_dict  = ref.resolveSibling("${ref.baseName}.dict")
     sheet     = file(params.samplesheet)
 

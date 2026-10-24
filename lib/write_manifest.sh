@@ -71,6 +71,7 @@ git_sha() {
 SHA=$(git_sha)
 
 # --- where: a container, a Slurm job, or neither ---------------------------------
+# week 6: check for aws batch first, because batch sets AWS_BATCH_JOB_ID for every job
 if [[ -n "${AWS_BATCH_JOB_ID:-}" ]]; then
     KIND=aws-batch; IMPL=aws-batch
 elif [[ -n "${APPTAINER_CONTAINER:-}" ]]; then
@@ -190,6 +191,7 @@ OUT="${RES}/manifest.json"
     printf '    "slurm_job_id": %s,\n'   "$(js "${SLURM_JOB_ID:-none}")"
     printf '    "slurm_cpus": %s,\n'     "$(js "${SLURM_CPUS_PER_TASK:-none}")"
     printf '    "container": %s,\n'      "$(js "${APPTAINER_CONTAINER:-none}")"
+    # week 6: the batch job's id, queue and compute environment; each is "none" when the run is not on batch
     printf '    "batch_job_id": %s,\n'   "$(js "${AWS_BATCH_JOB_ID:-none}")"
     printf '    "batch_queue": %s,\n'    "$(js "${AWS_BATCH_JQ_NAME:-none}")"
     printf '    "batch_compute_environment": %s\n' "$(js "${AWS_BATCH_CE_NAME:-none}")"

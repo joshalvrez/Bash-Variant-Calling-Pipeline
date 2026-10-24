@@ -29,11 +29,17 @@ USER mambauser
 
 
 # new: the AWS CLI, copied from AWS's own image
+# copy the cli out of aws's own image instead of installing it (installing awscli with micromamba runs out of memory)
 COPY --from=public.ecr.aws/aws-cli/aws-cli:2.37.12 /usr/local/aws-cli /usr/local/aws-cli
+# switch to root, because /usr/local/bin belongs to root
 USER root
+# put `aws` on the PATH with a link to the copied cli
 RUN ln -s /usr/local/aws-cli/v2/current/bin/aws /usr/local/bin/aws
+# switch back, so the job runs as week 3's non-root user
 USER $MAMBA_USER
 
 # new: the pipeline, and the script the job runs
+# copy my repo (minus what .dockerignore leaves out) to /pipeline, so /pipeline/run_pipeline.sh exists in the image
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /pipeline/
+# put the entry script where the job definition's command looks for it
 COPY --chown=$MAMBA_USER:$MAMBA_USER aws/batch_run.sh /usr/local/bin/batch_run.sh

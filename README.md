@@ -480,3 +480,7 @@ Nothing is graded on the biology, and your records do not have to match last wee
 - The first Explorer run: about 30 minutes once it starts, a lot of it converting images; a rerun
   with `-resume`: a minute or less, when nothing changed.
 - Failure 4: part of your first Explorer run, and one resubmission.
+
+## AI acknowledgement (Assignment 6)
+
+*AI Citation: For this assignment, I used Claude (Opus 5.5) to walk me through Assignment 6 step by step with explanations: setting up the S3 bucket, ECR repository, IAM roles, compute environment, job queue and job definition; the stage 9 edit to `lib/write_manifest.sh`; the `.dockerignore` entries specific to my repository; the `awsbatch` profile; and terminal commands for the teardown (including fixing a loop that did not work in zsh). I ran every command and built and pushed the image, submitted the jobs, and deleted the resources myself. The job ids, digests, manifests, checksums and `teardown-check.txt` are from my own runs.*

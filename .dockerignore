@@ -1,14 +1,20 @@
+# what docker leaves out of `COPY . /pipeline/`, so the image only gets the pipeline code
+# git history
 .git
 **/.DS_Store
+# run outputs and the workflow engines' working files
 results
 work
 .nextflow
 .nextflow.log*
 .snakemake
+# saved runs from earlier weeks and this week
 smoke-run*
 cluster-run*
 aws-run*
+# apptainer images from week 3
 *.sif
+# my repo's local data, old outputs, logs and zip (not in the course's list)
 smoke
 smoke-out
 logs
