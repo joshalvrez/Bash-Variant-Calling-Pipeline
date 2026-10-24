@@ -11,3 +11,8 @@ bwa=0.7.19 samtools=1.24 bcftools=1.24 gatk4=4.6.2.0 fastqc=0.12.1 fastp=1.3.7 m
 docker.io/joshalvrez/variant-call@sha256:824302cfa9f920fe9418728e00bf20efa6ed8daf9d8659a899c42bf538d34064
 
 To rerun this in a year,we would need the image the run used and the heading that gives it is **The pushed image**. The `.sif` on Explorer will be gone because `/scratch` is emptied every month and the tag `1.0` could have been pointed at a different image by then; the digest cannot change so `apptainer pull docker://joshalvrez/variant-call@sha256:<digest>` fetches the same image again. The other two headings are for the case where the registry copy is gone and the image has to be rebuilt from `containers/Dockerfile`: **Base image** says what to start from and **Versions pinned** says what to install but a rebuild resolves every package
+
+
+
+## The image in ECR
+<account>.dkr.ecr.us-east-2.amazonaws.com/variant-call@sha256:ff7f2a18b4fd297612e94298610c1a8d1f489fdaae4f65dccff7b0dd35a550c3
