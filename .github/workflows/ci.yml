@@ -32,6 +32,7 @@ jobs:
     # needs: lint --> the smoke job starts only after the lint job has passed, so that we don't waste time building the image if the scripts are broken.
     needs: lint
     runs-on: ubuntu-latest
+    # in week 3, we ran the pipeline using appainter exec <image> which had all the tools we would need. here, CI does the same thing but using Docker images 
     # CI creates a fresh machine for each job, so we need to build the image from containers/Dockerfile every time.
     steps:
       - name: Check out the repository
