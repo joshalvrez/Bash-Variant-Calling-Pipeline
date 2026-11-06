@@ -19,4 +19,6 @@ stage_analyze() {
     mv "${VAR}/cohort.filtered.tmp.vcf.gz.tbi" "${RES}/cohort.filtered.vcf.gz.tbi"
     mv "${VAR}/cohort.filtered.tmp.vcf.gz"     "${RES}/cohort.filtered.vcf.gz"
     log "filtered VCF: ${RES}/cohort.filtered.vcf.gz"
+    # count how many variants each filter caught (here only LowQual)
+    log "caught by each filter: $(bcftools query -f '%FILTER\n' "${RES}/cohort.filtered.vcf.gz" | awk '$0 != "PASS"' | sort | uniq -c | awk '{printf "%s %s  ", $2, $1}')"
 }
