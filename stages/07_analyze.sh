@@ -10,7 +10,7 @@ stage_analyze() {
         -V "${VAR}/cohort.vcf.gz" \
         -O "${VAR}/cohort.filtered.tmp.vcf.gz" \
         -L "$REGION" \
-        --filter-expression "QUAL < 300.0" \
+        --filter-expression "QUAL < 30.0" \
         --filter-name "LowQual" \
         --tmp-dir "${TMPDIR:-/tmp}" \
         2> "${LOG}/variantfiltration.log"
