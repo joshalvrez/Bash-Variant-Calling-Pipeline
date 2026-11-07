@@ -1,0 +1,44 @@
+{
+  "pipeline": {
+    "name": "variant-calling",
+    "version": "1.0.0",
+    "implementation": "aws-batch",
+    "git_sha": "540547906079ed2b7c374e65ef0a9dc554f220c6",
+    "run_id": "2026-11-07T00:48:54Z-5405479",
+    "started_at": "2026-11-07T00:48:54Z",
+    "finished_at": "2026-11-07T00:52:57Z",
+    "exit_status": "success"
+  },
+  "platform": {
+    "kind": "aws-batch",
+    "region": "smoke_1mb",
+    "host": "ip-172-31-30-51.us-east-2.compute.internal",
+    "slurm_job_id": "none",
+    "slurm_cpus": "none",
+    "container": "none",
+    "batch_job_id": "c4098847-f0cb-40b7-8641-768f1d6312cd",
+    "batch_queue": "binf6610-queue",
+    "batch_compute_environment": "binf6610-fargate"
+  },
+  "reference": {"genome": "/tmp/run.Ihvtvu/data/smoke.fa"},
+  "samples": [
+    {"sample_id": "smoke_01", "library_type": "paired", "condition": "unaffected"},
+    {"sample_id": "smoke_02", "library_type": "paired", "condition": "affected"},
+    {"sample_id": "smoke_03", "library_type": "single", "condition": "affected"}
+  ],
+  "outputs": [
+    {"stage": "analyze", "type": "vcf", "path": "cohort.filtered.vcf.gz", "checksum": "sha256:c72d6b942b49ca8f17b687db2183e3301bd5d3ddc1bf090719cfe153580d5e28"},
+    {"stage": "analyze", "type": "vcf_index", "path": "cohort.filtered.vcf.gz.tbi", "checksum": "sha256:0977c31e027c702ae3ab59d6dfa0b630ba352e991a8dac57945ded3ef01b4e71"},
+    {"stage": "qc_report", "type": "multiqc", "path": "multiqc_report.html", "checksum": "sha256:6d989ac28dc3fd95c606128c945bd49084e12d32ed7da2f88490e5590d0fcf99"}
+  ],
+  "metrics": [],
+  "tools": {
+    "bwa": "0.7.19-r1273",
+    "samtools": "1.24",
+    "bcftools": "1.24",
+    "gatk": "4.6.2.0",
+    "fastqc": "0.12.1",
+    "fastp": "1.3.7",
+    "multiqc": "1.35"
+  }
+}
