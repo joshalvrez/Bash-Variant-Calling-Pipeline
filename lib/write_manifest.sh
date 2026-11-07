@@ -68,7 +68,7 @@ git_sha() {
         echo "${sha}"
     fi
 }
-SHA=$(git_sha)
+SHA=${GIT_SHA:-$(git_sha)}    # CD hands in the commit it released
 
 # --- where: a container, a Slurm job, or neither ---------------------------------
 # week 6: check for aws batch first, because batch sets AWS_BATCH_JOB_ID for every job

@@ -19,3 +19,7 @@ smoke
 smoke-out
 logs
 week2-pipeline.zip
+tests
+.github
+ci-out
+cd-run*
